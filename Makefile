@@ -103,7 +103,7 @@ $(DATA_DIR)/2010-4th-quarter.norm1: $(DATA_DIR)/2010-4th-quarter.csv
 
 
 # rule to download the main data files
-%csv:
+%.csv:
 	curl -o $*.csv http://www.capitalbikeshare.com/assets/files/trip-history-data/`basename $*`.csv
 
 # Thanks to https://github.com/nelsonmc/bikeshare-tracker for this one, I couldn't find it listed on the bikeshare site
