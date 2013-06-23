@@ -102,7 +102,7 @@ $(MERGED): $(QUARTERS)
 
 db: $(RIDES_NORM_DB) $(RIDES_DENORM_DB)
 
-$(RIDES_NORM_DB) $(RIDES_DENORM_DB): $(MERGED) toDb.sql
+$(RIDES_NORM_DB) $(RIDES_DENORM_DB): $(MERGED) toDb.sql $(STATION_INFO)
 	# Generating sqlite databases, this takes a while
 	sqlite3 < toDb.sql
 
