@@ -21,11 +21,18 @@ POPULAR_ROUTES=$(DATA_DIR)/popular_routes.txt
 POPULAR_ROUTES_MONTHLY=$(DATA_DIR)/popular_routes_monthly.txt
 POPULAR_ROUTES_MONTHLY_JSON=$(DATA_DIR)/popular_routes_monthly.json
 
+MONTHLY_STATS=$(DATA_DIR)/monthly.txt
+MONTHLY_STATS_JSON=$(DATA_DIR)/monthly.json
+
 
 ###########################################################################
 # The basics
 
-all: $(MERGED) $(STATIONS) $(STATION_INFO) popular ui
+# Runs a simple python server for viewing the UI pages locally
+pyserver:
+	python -m SimpleHTTPServer
+
+all: ui
 
 # Cleans up all the generated working files
 clean:
@@ -43,30 +50,37 @@ clean_data:
 
 ###########################################################################
 # Real data processing
+analysis: popular stats
 
 popular: $(POPULAR_START_STATIONS) $(POPULAR_END_STATIONS) $(POPULAR_ROUTES) $(POPULAR_ROUTES_MONTHLY)
 
 $(POPULAR_START_STATIONS): $(RIDES_DENORM_DB)
-	echo ".separator , \n select startterminal, startname, startlat, startlon, count(*) cnt from fullrides group by startterminal, startname, startlat, startlon order by cnt desc;" | sqlite3 $(RIDES_DENORM_DB) > $(POPULAR_START_STATIONS)
+	echo ".separator , \n.header ON \n select startterminal, startname, startlat, startlon, count(*) rides, sum(durationsec) totalsec from fullrides group by startterminal, startname, startlat, startlon order by rides desc;" | sqlite3 $(RIDES_DENORM_DB) > $(POPULAR_START_STATIONS)
 
 $(POPULAR_END_STATIONS): $(RIDES_DENORM_DB)
-	echo ".separator , \n select endterminal, endname, endlat, endlon, count(*) cnt from fullrides group by endterminal, endname, endlat, endlon order by cnt desc;" | sqlite3 $(RIDES_DENORM_DB) > $(POPULAR_END_STATIONS)
+	echo ".separator , \n.header ON \n select endterminal, endname, endlat, endlon, count(*) rides, sum(durationsec) totalsec from fullrides group by endterminal, endname, endlat, endlon order by rides desc;" | sqlite3 $(RIDES_DENORM_DB) > $(POPULAR_END_STATIONS)
 
 $(POPULAR_ROUTES): $(RIDES_DENORM_DB)
-	echo ".separator , \n select  startterminal, startname, startlat, startlon, endterminal, endname, endlat, endlon, count(*) cnt from fullrides group by  startterminal, startname, startlat, startlon, endterminal, endname, endlat, endlon order by cnt desc;" | sqlite3 $(RIDES_DENORM_DB) > $(POPULAR_ROUTES)
+	echo ".separator , \n.header ON \n select  startterminal, startname, startlat, startlon, endterminal, endname, endlat, endlon, count(*) rides, sum(durationsec) totalsec from fullrides group by  startterminal, startname, startlat, startlon, endterminal, endname, endlat, endlon order by rides desc;" | sqlite3 $(RIDES_DENORM_DB) > $(POPULAR_ROUTES)
 
 $(POPULAR_ROUTES_MONTHLY): $(RIDES_DENORM_DB)
-	echo ".separator , \n select  strftime('%Y-%m',startdate) as month, startterminal, startname, startlat, startlon, endterminal, endname, endlat, endlon, count(*) cnt from fullrides group by  month, startterminal, startname, startlat, startlon, endterminal, endname, endlat, endlon order by month, cnt desc;" | sqlite3 $(RIDES_DENORM_DB) > $(POPULAR_ROUTES_MONTHLY)
+	echo ".separator , \n.header ON \n select  strftime('%Y-%m',startdate) as month, startterminal, startname, startlat, startlon, endterminal, endname, endlat, endlon, count(*) rides, sum(durationsec) totalsec from fullrides group by  month, startterminal, startname, startlat, startlon, endterminal, endname, endlat, endlon order by month, rides desc;" | sqlite3 $(RIDES_DENORM_DB) > $(POPULAR_ROUTES_MONTHLY)
 
+stats: $(MONTHLY_STATS)
 
+$(MONTHLY_STATS): $(RIDES_NORM_DB)
+	echo ".separator , \n.header ON \n select  strftime('%Y-%m',startdate) as month, count(*) rides, sum(durationsec) total_sec from rides group by month order by month;" | sqlite3 $(RIDES_NORM_DB) > $(MONTHLY_STATS)
 
 ###########################################################################
 # UI related things
 
-ui: $(POPULAR_ROUTES_MONTHLY_JSON)
+ui: $(POPULAR_ROUTES_MONTHLY) $(MONTHLY_STATS)
 
 $(POPULAR_ROUTES_MONTHLY_JSON): $(POPULAR_ROUTES_MONTHLY) csvToJson.py
 	cat $(POPULAR_ROUTES_MONTHLY) | python csvToJson.py month,startterminal,startname,startlat,startlon,endterminal,endname,endlat,endlon,count > $(POPULAR_ROUTES_MONTHLY_JSON)
+
+$(MONTHLY_STATS_JSON): $(MONTHLY_STATS) csvToJson.py
+	cat $(MONTHLY_STATS) | python csvToJson.py month,rides,total_sec > $(MONTHLY_STATS_JSON)
 
 
 

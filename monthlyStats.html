@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font: 10px sans-serif;
+}
+
+.title {
+  font: 14px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.line0 {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+.line1 {
+  fill: none;
+  stroke: firebrick;
+  stroke-width: 1.5px;
+}
+
+</style>
+
+<div class="title">Capital Bikeshare monthly stats</div>
+<div>Data from <a href="http://www.capitalbikeshare.com/system-data">Capital Bikeshare</a>, visualization library <a href="http://d3js.org/">D3</a>
+
+<script src="http://d3js.org/d3.v3.js"></script>
+<script>
+
+var margin = {top: 20, right: 20, bottom: 30, left: 50},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+var parseDate = d3.time.format("%Y-%m").parse;
+
+
+var x = d3.time.scale()
+    .range([0, width]);
+
+var y0 = d3.scale.linear()
+    .range([height, 0]);
+var y1 = d3.scale.linear()
+    .range([height, 0]);
+
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom");
+
+var y0Axis = d3.svg.axis()
+    .scale(y0)
+    .orient("left");
+var y1Axis = d3.svg.axis()
+    .scale(y1)
+    .orient("right");
+
+var line0 = d3.svg.line()
+    .x(function(d) { return x(d.month); })
+    .y(function(d) { return y0(d.rides); });
+var line1 = d3.svg.line()
+    .x(function(d) { return x(d.month); })
+    .y(function(d) { return y1(d.total_time); });
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var cache = [];
+    
+d3.csv("data/monthly.txt", function(error, data) {
+    cache = data;
+  data.forEach(function(d) {
+    d.month = parseDate(d.month);
+    d.rides = +d.rides;
+    d.total_sec = +d.total_sec;
+    d.total_time = +(d.total_sec / 3600.0);
+  });
+  x.domain(d3.extent(data, function(d) { return d.month; }));
+  y0.domain(d3.extent(data, function(d) { return d.rides; }));
+  y1.domain(d3.extent(data, function(d) { return d.total_time; }));
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .style("fill", "steelblue")
+      .call(y0Axis)
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .style("fill", "steelblue")
+      .text("Monthly Rides");
+  svg.append("g")
+      .attr("class", "y axis")
+      .attr("transform", "translate(" + width + ",0)")
+      .style("fill", "firebrick")
+      .call(y1Axis)
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", -10)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .style("fill", "firebrick")
+      .text("Monthly Hours Ridden");
+
+  svg.append("path")
+      .datum(data)
+      .attr("class", "line0")
+      .attr("d", line0);
+  svg.append("path")
+      .datum(data)
+      .attr("class", "line1")
+      .attr("d", line1);
+});
+  
+</script>
+<a href="https://github.com/jmeagher/capital-bikeshare/"><img style="position:absolute;top:0;right:0;border:0;" width="149" height="149" src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png" alt="Fork me on GitHub"></a>
+
