@@ -1,6 +1,6 @@
 DATA_DIR=data
 
-QUARTERS= $(DATA_DIR)/2010-4th-quarter.norm $(DATA_DIR)/2011-1st-quarter.norm $(DATA_DIR)/2011-2nd-quarter.norm $(DATA_DIR)/2011-3rd-quarter.norm $(DATA_DIR)/2011-4th-quarter.norm $(DATA_DIR)/2012-1st-quarter.norm $(DATA_DIR)/2012-2nd-quarter.norm $(DATA_DIR)/2012-3rd-quarter.norm $(DATA_DIR)/2012-4th-quarter.norm $(DATA_DIR)/2013-1st-quarter.norm 
+QUARTERS= $(DATA_DIR)/2010-4th-quarter.norm $(DATA_DIR)/2011-1st-quarter.norm $(DATA_DIR)/2011-2nd-quarter.norm $(DATA_DIR)/2011-3rd-quarter.norm $(DATA_DIR)/2011-4th-quarter.norm $(DATA_DIR)/2012-1st-quarter.norm $(DATA_DIR)/2012-2nd-quarter.norm $(DATA_DIR)/2012-3rd-quarter.norm $(DATA_DIR)/2012-4th-quarter.norm $(DATA_DIR)/2013-1st-quarter.norm
 
 MERGED=data/merged.rides
 
@@ -69,7 +69,7 @@ $(POPULAR_ROUTES_MONTHLY): $(RIDES_DENORM_DB)
 stats: $(MONTHLY_STATS)
 
 $(MONTHLY_STATS): $(RIDES_NORM_DB)
-	echo ".separator , \n.header ON \n select  strftime('%Y-%m',startdate) as month, count(*) rides, sum(durationsec) total_sec from rides group by month order by month;" | sqlite3 $(RIDES_NORM_DB) > $(MONTHLY_STATS)
+	echo ".separator , \n.header ON \n select  strftime('%Y-%m',startdate) as month, count(*) rides, sum(durationsec) total_sec, count(distinct bike) bike_count, count(distinct startterminal) terminal_count from rides group by month order by month;" | sqlite3 $(RIDES_NORM_DB) > $(MONTHLY_STATS)
 
 ###########################################################################
 # UI related things
