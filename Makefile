@@ -10,6 +10,9 @@ RIDES_DENORM_DB=data/rides_denormalized.db
 STATIONS=$(DATA_DIR)/bikeStations.xml
 STATION_INFO=$(DATA_DIR)/stations.txt
 
+ZIP_CODES=$(DATA_DIR)/zipCodes.zips
+ZIP_CODES_HEADLESS=$(DATA_DIR)/zipCodes_headless.txt
+
 LOCATIONS_FILE=$(DATA_DIR)/locations.txt
 BIKES_FILE=$(DATA_DIR)/bikes.txt
 TYPES_FILE=$(DATA_DIR)/types.txt
@@ -28,11 +31,11 @@ MONTHLY_STATS_JSON=$(DATA_DIR)/monthly.json
 ###########################################################################
 # The basics
 
+all: ui
+
 # Runs a simple python server for viewing the UI pages locally
 pyserver:
 	python -m SimpleHTTPServer
-
-all: ui
 
 # Cleans up all the generated working files
 clean:
@@ -45,6 +48,7 @@ clean:
 clean_data:
 	-rm $(DATA_DIR)/*.csv
 	-rm $(DATA_DIR)/*.xml
+	-rm $(DATA_DIR)/*.zips
 
 
 
@@ -55,16 +59,16 @@ analysis: popular stats
 popular: $(POPULAR_START_STATIONS) $(POPULAR_END_STATIONS) $(POPULAR_ROUTES) $(POPULAR_ROUTES_MONTHLY)
 
 $(POPULAR_START_STATIONS): $(RIDES_DENORM_DB)
-	echo ".separator , \n.header ON \n select startterminal, startname, startlat, startlon, count(*) rides, sum(durationsec) totalsec from fullrides group by startterminal, startname, startlat, startlon order by rides desc;" | sqlite3 $(RIDES_DENORM_DB) > $(POPULAR_START_STATIONS)
+	echo ".separator , \n.header ON \n select startterminal, startname, startlat, startlon, startzip count(*) rides, sum(durationsec) totalsec from fullrides group by startterminal, startname, startlat, startlon order by rides desc;" | sqlite3 $(RIDES_DENORM_DB) > $(POPULAR_START_STATIONS)
 
 $(POPULAR_END_STATIONS): $(RIDES_DENORM_DB)
-	echo ".separator , \n.header ON \n select endterminal, endname, endlat, endlon, count(*) rides, sum(durationsec) totalsec from fullrides group by endterminal, endname, endlat, endlon order by rides desc;" | sqlite3 $(RIDES_DENORM_DB) > $(POPULAR_END_STATIONS)
+	echo ".separator , \n.header ON \n select endterminal, endname, endlat, endlon, endzip, count(*) rides, sum(durationsec) totalsec from fullrides group by endterminal, endname, endlat, endlon order by rides desc;" | sqlite3 $(RIDES_DENORM_DB) > $(POPULAR_END_STATIONS)
 
 $(POPULAR_ROUTES): $(RIDES_DENORM_DB)
-	echo ".separator , \n.header ON \n select  startterminal, startname, startlat, startlon, endterminal, endname, endlat, endlon, count(*) rides, sum(durationsec) totalsec from fullrides group by  startterminal, startname, startlat, startlon, endterminal, endname, endlat, endlon order by rides desc;" | sqlite3 $(RIDES_DENORM_DB) > $(POPULAR_ROUTES)
+	echo ".separator , \n.header ON \n select  startterminal, startname, startlat, startlon, startzip, endterminal, endname, endlat, endlon, endzip, count(*) rides, sum(durationsec) totalsec from fullrides group by  startterminal, startname, startlat, startlon, endterminal, endname, endlat, endlon order by rides desc;" | sqlite3 $(RIDES_DENORM_DB) > $(POPULAR_ROUTES)
 
 $(POPULAR_ROUTES_MONTHLY): $(RIDES_DENORM_DB)
-	echo ".separator , \n.header ON \n select  strftime('%Y-%m',startdate) as month, startterminal, startname, startlat, startlon, endterminal, endname, endlat, endlon, count(*) rides, sum(durationsec) totalsec from fullrides group by  month, startterminal, startname, startlat, startlon, endterminal, endname, endlat, endlon order by month, rides desc;" | sqlite3 $(RIDES_DENORM_DB) > $(POPULAR_ROUTES_MONTHLY)
+	echo ".separator , \n.header ON \n select  strftime('%Y-%m',startdate) as month, startterminal, startname, startlat, startlon, startzip, endterminal, endname, endlat, endlon, endzip, count(*) rides, sum(durationsec) totalsec from fullrides group by  month, startterminal, startname, startlat, startlon, endterminal, endname, endlat, endlon order by month, rides desc;" | sqlite3 $(RIDES_DENORM_DB) > $(POPULAR_ROUTES_MONTHLY)
 
 stats: $(MONTHLY_STATS)
 
@@ -102,9 +106,12 @@ $(MERGED): $(QUARTERS)
 
 db: $(RIDES_NORM_DB) $(RIDES_DENORM_DB)
 
-$(RIDES_NORM_DB) $(RIDES_DENORM_DB): $(MERGED) toDb.sql $(STATION_INFO)
+$(RIDES_NORM_DB) $(RIDES_DENORM_DB): .makedb
+
+.makedb: $(MERGED) toDb.sql $(STATION_INFO) $(ZIP_CODES_HEADLESS) 
 	# Generating sqlite databases, this takes a while
 	sqlite3 < toDb.sql
+	touch .makedb
 
 
 
@@ -151,6 +158,12 @@ $(DATA_DIR)/2010-4th-quarter.norm: $(DATA_DIR)/2010-4th-quarter.csv
 # Thanks to https://github.com/nelsonmc/bikeshare-tracker for this one, I couldn't find it listed on the bikeshare site
 $(STATIONS):
 	curl -o $(STATIONS) http://www.capitalbikeshare.com/data/stations/bikeStations.xml
+
+$(ZIP_CODES):
+	curl -o $(ZIP_CODES) http://geocommons.com/overlays/112367.csv
+
+$(ZIP_CODES_HEADLESS): $(ZIP_CODES)
+	tail -n+2 $(ZIP_CODES) > $(ZIP_CODES_HEADLESS)
 
 
 
