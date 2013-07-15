@@ -1,0 +1,59 @@
+
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+svg { outline: #888888 dotted thin; }
+
+/* CSS goes here. */
+.area{ fill: #ddc; }
+.boundary {
+  fill: none;
+  stroke: #777;
+  stroke-linejoin: round;
+}
+
+</style>
+<body>
+    <div class="container"></div>
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script>
+var width = 300,
+    height = 300;
+
+// var projection = d3.geo.albers()
+//     .scale(500)
+//     .translate([width / 2, height / 2]);
+var projection = d3.geo.albers()
+    //.center([-77.1197, 38.7916])
+    .center([0, 38.8945])
+    .rotate([77.0362, 0])
+    .parallels([50, 60])
+    .scale(80000)
+    .translate([width / 2, height / 2]);
+
+var path = d3.geo.path()
+    .projection(projection);
+
+
+var svg = d3.select(".container").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+d3.json("data/DC.topojson", function(error, topo) {
+    console.log(topo);
+
+//     svg.append("path")
+//       .datum(topojson.feature(topo, topo.objects.DC))
+//       .attr("d", path);
+    svg.selectAll(".baseMap")
+        .data(topojson.feature(topo, topo.objects.DC).features)
+      .enter().append("path")
+        .attr("class", function(d) { return "boundary " + d.id; })
+        .attr("d", path);
+});
+</script>
+
+</body>
