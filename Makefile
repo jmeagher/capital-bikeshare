@@ -1,6 +1,6 @@
 DATA_DIR=data
 
-QUARTERS= $(DATA_DIR)/2010-4th-quarter.norm $(DATA_DIR)/2011-1st-quarter.norm $(DATA_DIR)/2011-2nd-quarter.norm $(DATA_DIR)/2011-3rd-quarter.norm $(DATA_DIR)/2011-4th-quarter.norm $(DATA_DIR)/2012-1st-quarter.norm $(DATA_DIR)/2012-2nd-quarter.norm $(DATA_DIR)/2012-3rd-quarter.norm $(DATA_DIR)/2012-4th-quarter.norm $(DATA_DIR)/2013-1st-quarter.norm
+QUARTERS= $(DATA_DIR)/2010-4th-quarter.norm $(DATA_DIR)/2011-1st-quarter.norm $(DATA_DIR)/2011-2nd-quarter.norm $(DATA_DIR)/2011-3rd-quarter.norm $(DATA_DIR)/2011-4th-quarter.norm $(DATA_DIR)/2012-1st-quarter.norm $(DATA_DIR)/2012-2nd-quarter.norm $(DATA_DIR)/2012-3rd-quarter.norm $(DATA_DIR)/2012-4th-quarter.norm $(DATA_DIR)/2013-1st-quarter.norm $(DATA_DIR)/2013-2nd-quarter.norm
 
 MERGED=data/merged.rides
 
@@ -123,6 +123,9 @@ $(RIDES_NORM_DB) $(RIDES_DENORM_DB): .makedb
 
 
 # late 2012 and 2013 are the same
+$(DATA_DIR)/2013-2nd-quarter.norm: $(DATA_DIR)/2013-2nd-quarter.csv
+	cat $(DATA_DIR)/2013-2nd-quarter.csv | tail -n+2 | python normalize.py 2013 > $(DATA_DIR)/2013-2nd-quarter.norm
+
 $(DATA_DIR)/2013-1st-quarter.norm: $(DATA_DIR)/2013-1st-quarter.csv
 	cat $(DATA_DIR)/2013-1st-quarter.csv | tail -n+2 | python normalize.py 2013 > $(DATA_DIR)/2013-1st-quarter.norm
 
