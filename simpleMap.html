@@ -20,8 +20,8 @@ svg { outline: #888888 dotted thin; }
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script src="http://d3js.org/topojson.v1.min.js"></script>
 <script>
-var width = 300,
-    height = 300;
+var width = 600,
+    height = 600;
 
 // var projection = d3.geo.albers()
 //     .scale(500)
@@ -31,7 +31,7 @@ var projection = d3.geo.albers()
     .center([0, 38.8945])
     .rotate([77.0362, 0])
     .parallels([50, 60])
-    .scale(80000)
+    .scale(200000)
     .translate([width / 2, height / 2]);
 
 var path = d3.geo.path()

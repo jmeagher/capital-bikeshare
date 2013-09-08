@@ -25,6 +25,7 @@ POPULAR_START_STATIONS=$(DATA_DIR)/popular_start.txt
 POPULAR_END_STATIONS=$(DATA_DIR)/popular_end.txt
 POPULAR_ROUTES=$(DATA_DIR)/popular_routes.txt
 POPULAR_ROUTES_MONTHLY=$(DATA_DIR)/popular_routes_monthly.txt
+POPULAR_ROUTES_MONTHLY_LIMITED=$(DATA_DIR)/popular_routes_monthly_limited.txt
 POPULAR_ROUTES_MONTHLY_JSON=$(DATA_DIR)/popular_routes_monthly.json
 
 MONTHLY_STATS=$(DATA_DIR)/monthly.txt
@@ -58,15 +59,14 @@ clean_data:
 
 geo: $(DC_TOPO)
 
-
 ###########################################################################
 # Real data processing
 analysis: popular stats
 
-popular: $(POPULAR_START_STATIONS) $(POPULAR_END_STATIONS) $(POPULAR_ROUTES) $(POPULAR_ROUTES_MONTHLY)
+popular: $(POPULAR_START_STATIONS) $(POPULAR_END_STATIONS) $(POPULAR_ROUTES) $(POPULAR_ROUTES_MONTHLY) $(POPULAR_ROUTES_MONTHLY_LIMITED)
 
 $(POPULAR_START_STATIONS): $(RIDES_DENORM_DB)
-	echo ".separator , \n.header ON \n select startterminal, startname, startlat, startlon, startzip count(*) rides, sum(durationsec) totalsec from fullrides group by startterminal, startname, startlat, startlon order by rides desc;" | sqlite3 $(RIDES_DENORM_DB) > $(POPULAR_START_STATIONS)
+	echo ".separator , \n.header ON \n select startterminal, startname, startlat, startlon, startzip, count(*) rides, sum(durationsec) totalsec from fullrides group by startterminal, startname, startlat, startlon order by rides desc;" | sqlite3 $(RIDES_DENORM_DB) > $(POPULAR_START_STATIONS)
 
 $(POPULAR_END_STATIONS): $(RIDES_DENORM_DB)
 	echo ".separator , \n.header ON \n select endterminal, endname, endlat, endlon, endzip, count(*) rides, sum(durationsec) totalsec from fullrides group by endterminal, endname, endlat, endlon order by rides desc;" | sqlite3 $(RIDES_DENORM_DB) > $(POPULAR_END_STATIONS)
@@ -76,6 +76,9 @@ $(POPULAR_ROUTES): $(RIDES_DENORM_DB)
 
 $(POPULAR_ROUTES_MONTHLY): $(RIDES_DENORM_DB)
 	echo ".separator , \n.header ON \n select  strftime('%Y-%m',startdate) as month, startterminal, startname, startlat, startlon, startzip, endterminal, endname, endlat, endlon, endzip, count(*) rides, sum(durationsec) totalsec from fullrides group by  month, startterminal, startname, startlat, startlon, endterminal, endname, endlat, endlon order by month, rides desc;" | sqlite3 $(RIDES_DENORM_DB) > $(POPULAR_ROUTES_MONTHLY)
+
+$(POPULAR_ROUTES_MONTHLY_LIMITED): $(RIDES_DENORM_DB)
+	echo ".separator , \n.header ON \n select  strftime('%Y-%m',startdate) as month, startterminal, startname, startlat, startlon, startzip, endterminal, endname, endlat, endlon, endzip, count(*) rides, sum(durationsec) totalsec from fullrides group by  month, startterminal, startname, startlat, startlon, endterminal, endname, endlat, endlon having rides > 10 order by month, rides desc;" | sqlite3 $(RIDES_DENORM_DB) > $(POPULAR_ROUTES_MONTHLY_LIMITED)
 
 stats: $(MONTHLY_STATS)
 

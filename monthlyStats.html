@@ -105,10 +105,10 @@ var yTimeAxis = d3.svg.axis()
     .orient("right");
 var yBikesAxis = d3.svg.axis()
     .scale(yBikes)
-    .orient("right");
+    .orient("left");
 var yTerminalsAxis = d3.svg.axis()
     .scale(yTerminals)
-    .orient("left");
+    .orient("right");
 
 var lineRides = d3.svg.line()
     .x(function(d) { return x(d.month); })
@@ -157,12 +157,12 @@ d3.csv("data/monthly.txt", function(error, data) {
       .attr("class", "axis rides")
       .call(yRidesAxis);
   svg.append("g")
+      .attr("class", "y axis")
       .attr("class", "axis time")
-      .attr("transform", "translate(" + width + ",0)")
       .call(yTimeAxis);
   svg.append("g")
-      .attr("class", "y axis")
       .attr("class", "axis bikes")
+      .attr("transform", "translate(" + width + ",0)")
       .call(yBikesAxis);
   svg.append("g")
       .attr("class", "axis terminals")
